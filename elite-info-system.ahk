@@ -363,20 +363,46 @@ OperationsList:
             operationTitleNum%indexcnt% := getWorksheetsTitleNum(operations[A_index])
             Gui, font, s18 normal
             Gui, Add, Text, ym c%msgalertcolor% section, % operationTitleNum%A_index%["title"]
-            
+            Gui, font, s10 cEEEEEE normal
+            Gui, Add, ListView, -LV0x8 LV0x100 IconSmall r25 w250 vOps_%A_index% gLv -WantF2 -Hdr -E0x200 -Multi -grid BackgroundTrans +ReadOnly AltSubmit, OperationsLists
+            LV_ModifyCol(1, 220)
+            ImageListID := IL_Create(2)  ; Create an ImageList to hold 10 small icons.
+            LV_SetImageList(ImageListID)  ; Assign the above ImageList to the current ListView.
+            IL_Add(ImageListID, "shell32.dll", 50)
+            IL_Add(ImageListID, "shell32.dll", 14)
+                           
             loop, % operationTitleNum%A_index%["entries"]
             {   
                 fieldscnt := A_index
                 allentries := getOpEntries(operations[indexcnt], fieldscnt)
-                Gui, font, s10 c%msxtxtcolor% normal
-                Gui, Add, text, xs h24 0x800201 v%indexcnt%_%fieldscnt% gShowOp, % "  " allentries[fieldscnt]["content"][1] "  "
+                iconstr :=
+                loop, % allentries[fieldscnt]["fields"]
+                {
+                    if A_index > 1
+                    { 
+                        if % allentries[fieldscnt]["content"][A_index]
+                        {
+                            iconstr := "Icon2"
+                        }
+                        else
+                        {
+                            iconstr := ""
+                        }
+                    }
+                }
+                
+                curValue := allentries[fieldscnt]["content"][1]
+                LV_Add(iconstr, curValue)
             }
+			
         }
     }
     else
     {
         ErrorGui()
     }
+
+      ; Auto-size each column to fit its contents.
     
     Gui, margin, 50,20 
     WinSet, TransColor, EE0000 175
@@ -384,51 +410,103 @@ OperationsList:
     Suspend, Off
     return
     
+    Lv:
+    if (a_guievent = "normal") 
+    {   
+        
+        StringSplit, tempOpsIdx, A_GuiControl, _,
+        sel_opsidx := tempOpsIdx2
+        sel_op := A_EventInfo
+        LV_Modify(sel_op, "-Select")
+        sel_entries := getOpEntries(operations[sel_opsidx], sel_op)
+        sel_op_entries := sel_entries[sel_op]["fields"]
+        
+        if sel_op_entries
+        {
+            loop, %sel_op_entries%
+            {
+                if A_index > 1
+                {
+                    curValue := sel_entries[sel_op]["content"][A_index]
+                    if curValue
+                    {
+                       goto, ShowOp 
+                    }
+                    else 
+                    {
+                        stillEmpty := 1
+                    }
+                }
+            }
+            if stillEmpty
+            {   
+                
+                #Persistent
+                Tooltip, % "no additional data for " sel_entries[sel_op]["content"][1]
+                SetTimer, RemoveToolTip, 1500
+                return
+
+                RemoveToolTip:
+                SetTimer, RemoveToolTip, Off
+                ToolTip
+                return 
+            }
+        }
+    }
+    return
+    
     ShowOp:
         Suspend, On
-        StringSplit, tempidx, A_GuiControl, _,
-        idxcnt = % tempidx1
-        allentriesidx = % tempidx2
+
+        idxcnt := sel_opsidx
+        allentriesidx := sel_op
         allentries := getOpEntries(operations[idxcnt], allentriesidx)
         msgalertcolor := opsWS_bcg_%idxcnt%
         msxtxtcolor := opsWS_txt_%idxcnt%
         Gui, Destroy
         Gui, +lastFound +Owner +AlwaysOnTop -border -caption -ToolWindow
-        Gui, Color, %msgalertcolor%
+        Gui, Color, 000000
         Gui, margin, 16,30
         
+        StringUpper, OpCat, % operationTitleNum%idxcnt%["title"]
+        
+        Gui, font, s10 c%msgalertcolor% bold
+        Gui, Add, text, xm+16, % OpCat
         Gui, font, s15 c%msxtxtcolor% bold
-        Gui, Add, text, xm, % "  " allentries[allentriesidx]["content"][1] "  "
+        Gui, Add, text, xp yp+20, % allentries[allentriesidx]["content"][1]
         
         Gui, margin, 30,10
         Gui, font, s4 normal
-        Gui, Add, text, , " "
-        Gui, font, s10 normal
+        Gui, Add, text, ,
+        Gui, font, s10 c%msxtxtcolor% normal
         loop, % allentries[allentriesidx]["fields"]
         {
             if A_index > 1
             {
-                if SubStr(allentries[allentriesidx]["content"][A_index], 1 , 4) = "http"
+                if % allentries[allentriesidx]["content"][A_index]
                 {
-                    oper_url := % allentries[allentriesidx]["content"][A_index]
-                    Gui, font, bold
-                    Gui, Add, text, xm w100 section, % allentries[allentriesidx]["label"][A_index]
-                    Gui, font, normal underline
-                    Gui, Add, text, ys w550 gGoToForum, % oper_url
-                }
-                else
-                {   
-                    Gui, font, bold
-                    Gui, Add, text, xm cWhite w100 section, % allentries[allentriesidx]["label"][A_index]
-                    Gui, font, normal
-                    Gui, Add, text, ys cWhite w550, % allentries[allentriesidx]["content"][A_index]
+                    if SubStr(allentries[allentriesidx]["content"][A_index], 1 , 4) = "http"
+                    {
+                        oper_url := % allentries[allentriesidx]["content"][A_index]
+                        Gui, font, bold
+                        Gui, Add, text, xm w100 section, % allentries[allentriesidx]["label"][A_index]
+                        Gui, font, normal underline
+                        Gui, Add, text, ys w550 gGoToForum, % oper_url
+                    }
+                    else
+                    {   
+                        Gui, font, bold
+                        Gui, Add, text, xm cWhite w100 section, % allentries[allentriesidx]["label"][A_index]
+                        Gui, font, normal
+                        Gui, Add, text, ys cWhite w550, % allentries[allentriesidx]["content"][A_index]
+                    }
                 }
             }
         }
         
         Gui, margin, 30,10
         Gui, Add, Text, x40, 
-        WinSet, TransColor, 000000 175
+        WinSet, TransColor, FFFFFF 175
         Gui, show, autosize, OperationScreen
         Suspend, Off
         return

@@ -12,7 +12,7 @@ URLDownloadToVar(url) {
     if url <> ""
     {
         hObject:=ComObjCreate("WinHttp.WinHttpRequest.5.1")
-        hObject.Open("GET",url)
+        hObject.Open("GET", url)
         hObject.Send()
         response := hObject.ResponseText
         hObject :=
@@ -246,7 +246,7 @@ getWorksheets(SheetKey, accessToken)
     StringReplace, fileName, fileName, <feed xmlns='http://www.w3.org/2005/Atom' xmlns:openSearch='http://a9.com/-/spec/opensearchrss/1.0/' xmlns:gs='http://schemas.google.com/spreadsheets/2006'>, <feed xmlns:openSearch='http://a9.com/-/spec/opensearchrss/1.0/' xmlns:gs='http://schemas.google.com/spreadsheets/2006'>
     xmlObj := loadXML(fileName)
     n := xmlObj.SelectNodes("//entry/link[1]/@href")
-    
+
     xmlWorksheets := []
     while, Node := n.item[A_Index-1]
     {   
@@ -260,6 +260,7 @@ getWSnames(Sheetkey, accessToken)
     WS_url := "https://spreadsheets.google.com/feeds/worksheets/" SheetKey "/private/full?access_token=" accessToken
     fileName := URLDownloadToVar(WS_url)
     StringReplace, fileName, fileName, <feed xmlns='http://www.w3.org/2005/Atom' xmlns:openSearch='http://a9.com/-/spec/opensearchrss/1.0/' xmlns:gs='http://schemas.google.com/spreadsheets/2006'>, <feed xmlns:openSearch='http://a9.com/-/spec/opensearchrss/1.0/' xmlns:gs='http://schemas.google.com/spreadsheets/2006'>
+
     xmlObj := loadXML(fileName)
     n0 := xmlObj.SelectNodes("./node()//entry/title")
     
