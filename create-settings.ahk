@@ -13,6 +13,8 @@ if FileExist( "settings.ini" )
     goto, WorksheetSettings
 } 
 
+StartSettings:
+
 Gui, 1:Add, Picture, x+10 ym+20 w480 h50 , eis-head.png
 
 Gui, 1:Add, GroupBox, xs y+20 w1005 h103 Section, GENERAL INFO
@@ -151,6 +153,11 @@ CreateSettings:
         FileDelete, settings.ini
     }
     
+    if FileExist( "settings.dll" ) 
+    {
+        FileDelete, settings.dll
+    }
+    
     if (WithoutLogin = 1)
     {
         LoginType := "WithoutLogin"
@@ -282,14 +289,15 @@ WorksheetSettings:
 
     Gui, destroy
     SetTimer, EnableButtonsSetup, Off
-    
     if FileExist( "settings.dll" ) {
+
         asm := CLR_LoadLibrary("settings.dll")
         obj := CLR_CreateObject(asm, "Settings")
         e_client_id := obj.gcc()
         e_client_secret := obj.gcs()
         e_refresh_token := obj.grt()
         e_org_name := obj.gon()
+        e_org_website := obj.gow()
         e_status_sheet_key := obj.gss()
         e_ops_sheet_key := obj.gos()
         e_wings_sheet_key := obj.gws()
@@ -298,6 +306,7 @@ WorksheetSettings:
         client_secret := Decrypt(e_client_secret)
         refresh_token := Decrypt(e_refresh_token)
         org_name := Decrypt(e_org_name)
+        org_website := Decrypt(e_org_website)
         status_sheet_key := Decrypt(e_status_sheet_key)
         ops_sheet_key := Decrypt(e_ops_sheet_key)
         wings_sheet_key := Decrypt(e_wings_sheet_key)
@@ -309,7 +318,7 @@ WorksheetSettings:
     }
 
     myAccessToken := GetAccessCode(client_id, client_secret, refresh_token)
-    
+
     if FileExist( "settings.ini" ) {
 
         IniRead, status_hotkey, settings.ini, General, status_hotkey
@@ -327,7 +336,7 @@ WorksheetSettings:
         {
             opsWS := getWSnames(ops_sheet_key, myAccessToken)
         }
-        ;msgbox, % wings_sheet_key
+        
         if wings_sheet_key <> ""
         {
             wingsWS := getWSnames(wings_sheet_key, myAccessToken)
@@ -378,7 +387,7 @@ WorksheetSettings:
     Gui, 1:Add, Text, xp+20 yp+35 w220 h20 section, status message for user:
     Gui, 1:Add, text, ys w82 h20, back color:
     Gui, 1:Add, text, ys w85 h20, text color:
-
+    
     if % statusWS.length()
     {
         loop, % statusWS.length()
@@ -390,12 +399,16 @@ WorksheetSettings:
             Gui, 1:Add, button, x+0 yp w20 h20 vstatusWS_txt_%A_index% gButtonColorPicker, ...
         }
     }
+    else
+    {
+        goto, ClearSettings
+    }
     
     Gui, 1:Add, GroupBox, ym+90 w510 h328 section, OPERATION WORKSHEETS
     Gui, 1:Add, Text, xp+20 yp+35 w220 h20 section, operations list name:
     Gui, 1:Add, text, ys w82 h20, back color:
     Gui, 1:Add, text, ys w85 h20, text color:
-
+    
     if % opsWS.length()
     {
         loop, % opsWS.length()
@@ -406,6 +419,10 @@ WorksheetSettings:
             Gui, 1:Add, edit, ys w60 h20 vVal_opsWS_txt_%A_index%, % opsWS_txt_%A_index%
             Gui, 1:Add, button, x+0 yp w20 h20 vopsWS_txt_%A_index% gButtonColorPicker, ...
         }
+    }
+    else
+    {
+        goto, ClearSettings
     }
 
     Gui, 1:Add, GroupBox, xs-20 y+228 w510 h105 section, WINGS BROADCAST WORKSHEETS
@@ -423,6 +440,10 @@ WorksheetSettings:
             Gui, 1:Add, edit, ys w60 h20 vVal_wingsWS_txt_%A_index%, % wingsWS_txt_%A_index%
             Gui, 1:Add, button, x+0 yp w20 h20 vwingsWS_txt_%A_index% gButtonColorPicker, ...
         }
+    }
+    else
+    {   
+        goto, ClearSettings
     }
 
     Gui, 1:Add, text, xm w10 h10,
@@ -556,3 +577,11 @@ ChooseColor(Color=0xF, hWnd=0x0, Flags=0x2 )  { ; CC_FULLOPEN := 0x2
     ;Return HexColorCode  
     GuiControl, 1:, Val_%A_GuiControl%, %HexColorCode%
 }
+
+ClearSettings:
+    FileDelete, settings.dll
+    FileDelete, settings.ini
+    ErrorGui("Error found, restarting Settings")
+    goto, StartSettings
+    return
+    
