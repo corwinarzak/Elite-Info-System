@@ -347,7 +347,8 @@ OperationsList:
     
     myAccessToken := GetAccessCode(client_id, client_secret, refresh_token)
     operations := getWorksheetsData(ops_sheet_key, myAccessToken)
-
+    
+    OperationsListBack:
     Gui, Destroy
 
     Gui, +e0x80 +lastFound +Owner +AlwaysOnTop -border -caption -ToolWindow
@@ -441,7 +442,6 @@ OperationsList:
             if stillEmpty
             {   
                 
-                #Persistent
                 Tooltip, % "no additional data for " sel_entries[sel_op]["content"][1]
                 SetTimer, RemoveToolTip, 1500
                 return
@@ -506,7 +506,11 @@ OperationsList:
         
         Gui, margin, 30,10
         Gui, Add, Text, x40, 
-        WinSet, TransColor, FFFFFF 175
+        Gui, font, s10 c%msxtxtcolor% normal
+        Gui, Add, text, xm gOperationsListBack, <<< back to list
+        Gui, Add, text, ym+10 gGuiClose, [esc] to close
+        Gui, Add, Text, x40, 
+        WinSet, TransColor, EE0000 175
         Gui, show, autosize, OperationScreen
         Suspend, Off
         return
@@ -517,7 +521,7 @@ OperationsList:
     showAndBreak(status_hotkey, operations_hotkey, wing_enter_hotkey, all_wings_hotkey) 
     Gui, Destroy
     Suspend, Off
-    Exit
+    return
 
 return
 
@@ -623,10 +627,10 @@ CmdrCheckPrompt:
                 }
             }
             
-            WinSet, TransColor, 000000 175
+            WinSet, TransColor, EE0000 175
             Gui, margin, 30,30
             Gui, show, autosize
-            showAndBreak(status_hotkey, operations_hotkey, wing_enter_hotkey, all_wings_hotkey, 8)
+            showAndBreak(status_hotkey, operations_hotkey, wing_enter_hotkey, all_wings_hotkey, 5)
             Gui, Destroy
             Suspend, Off 
             return
@@ -798,6 +802,8 @@ CheckWings:
 CheckWingsGUIClose:
     gui, 7:Destroy
     SetTimer, CheckWingsGUIClose, Off
+    Gui, show, autosize
+    Gui, Destroy
     return
 
 CheckWingsList:
@@ -891,7 +897,7 @@ CheckWingsList:
         }
         if foundanywing
         {
-            WinSet, TransColor, 000000 175
+            WinSet, TransColor, EE0000 175
             Gui, Show, Center autosize, AllWings
         }
         else
@@ -963,12 +969,6 @@ GuiEscape:
 
     if !isLogged
     {
-        Gui, Destroy
-        CStatus := ""
-        Operations := ""
-        foundanywing := 0
-        foundnewwing := 0
-        Suspend, Off
         
         if (login_type = "Enjin_API")
         {
