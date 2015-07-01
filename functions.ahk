@@ -1,11 +1,13 @@
 Encrypt(mystring)
 {
-
+	/* --- add your string encryption code --- */
+	return mystring
 }
 
 Decrypt(allstr)
 {
-
+	/* --- add your string decryption code --- */
+	return allstr
 }
 
 URLDownloadToVar(url) {
